@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interval — A timer built for deep work</title>
+<meta name="description" content="Interval is a focus timer that protects your attention with structured work sessions, gentle breaks, and a weekly rhythm you can actually keep.">
+<meta property="og:title" content="Interval — A timer built for deep work">
+<meta property="og:description" content="Structured work sessions, gentle breaks, and a weekly rhythm you can keep.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F6F4EE;
+    --surface: #FFFFFF;
+    --ink: #202B24;
+    --ink-soft: #55625A;
+    --accent: #3F6E52;
+    --accent-dark: #2C4E3A;
+    --gold: #C98A2B;
+    --line: #DDD6C6;
+    --radius: 4px;
+    --serif: "Fraunces", Georgia, serif;
+    --sans: "Work Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", "Courier New", monospace;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  img{max-width:100%;display:block;}
+  a{color:inherit;}
+  .wrap{
+    max-width:1160px;
+    margin:0 auto;
+    padding:0 32px;
+  }
+  h1,h2,h3{
+    font-family:var(--serif);
+    font-weight:500;
+    margin:0;
+    color:var(--ink);
+  }
+  p{margin:0;}
+
+  /* focus visibility */
+  a:focus-visible, button:focus-visible{
+    outline:2px solid var(--accent-dark);
+    outline-offset:3px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+
+  /* ---------- header ---------- */
+  header{
+    position:sticky;
+    top:0;
+    z-index:20;
+    background:rgba(246,244,238,0.92);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:20px 32px;
+    max-width:1160px;
+    margin:0 auto;
+  }
+  .wordmark{
+    font-family:var(--serif);
+    font-size:22px;
+    font-weight:600;
+    letter-spacing:-0.01em;
+    text-decoration:none;
+    color:var(--ink);
+  }
+  .wordmark span{color:var(--accent);}
+  .nav-links{
+    display:flex;
+    gap:32px;
+    list-style:none;
+    margin:0;
+    padding:0;
+  }
+  .nav-links a{
+    text-decoration:none;
+    font-size:15px;
+    color:var(--ink-soft);
+    transition:color .15s ease;
+  }
+  .nav-links a:hover{color:var(--ink);}
+  .nav-cta{
+    display:inline-block;
+    background:var(--ink);
+    color:var(--bg);
+    padding:10px 20px;
+    border-radius:var(--radius);
+    text-decoration:none;
+    font-size:14px;
+    font-weight:500;
+    transition:background .15s ease;
+  }
+  .nav-cta:hover{background:var(--accent-dark);}
+  .nav-toggle{display:none;}
+
+  /* ---------- hero ---------- */
+  .hero{
+    padding:88px 0 96px;
+  }
+  .hero-grid{
+    display:grid;
+    grid-template-columns:1.1fr 0.9fr;
+    gap:64px;
+    align-items:center;
+  }
+  .hero-copy h1{
+    font-size:clamp(38px, 5vw, 58px);
+    line-height:1.08;
+    letter-spacing:-0.015em;
+    max-width:12ch;
+  }
+  .hero-copy p.lede{
+    margin-top:24px;
+    font-size:19px;
+    color:var(--ink-soft);
+    max-width:46ch;
+  }
+  .hero-actions{
+    margin-top:36px;
+    display:flex;
+    align-items:center;
+    gap:20px;
+    flex-wrap:wrap;
+  }
+  .btn-primary{
+    background:var(--accent);
+    color:#fff;
+    padding:14px 26px;
+    border-radius:var(--radius);
+    text-decoration:none;
+    font-size:15px;
+    font-weight:500;
+    border:none;
+    cursor:pointer;
+    transition:background .15s ease, transform .15s ease;
+  }
+  .btn-primary:hover{background:var(--accent-dark); transform:translateY(-1px);}
+  .link-quiet{
+    font-size:15px;
+    color:var(--ink-soft);
+    text-decoration:none;
+    border-bottom:1px solid var(--line);
+    padding-bottom:2px;
+    transition:border-color .15s ease, color .15s ease;
+  }
+  .link-quiet:hover{color:var(--ink); border-color:var(--ink);}
+  .hero-note{
+    margin-top:28px;
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+
+  /* ---------- timer widget (interactive element) ---------- */
+  .timer-card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:36px;
+    box-shadow:0 1px 0 rgba(32,43,36,0.03);
+  }
+  .timer-card .label{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--ink-soft);
+    letter-spacing:0.02em;
+  }
+  .timer-display{
+    font-family:var(--mono);
+    font-size:clamp(52px, 8vw, 72px);
+    font-weight:500;
+    margin:18px 0 6px;
+    font-variant-numeric:tabular-nums;
+    color:var(--ink);
+    transition:color .3s ease;
+  }
+  .timer-display.is-running{color:var(--accent-dark);}
+  .timer-sub{
+    font-size:14px;
+    color:var(--ink-soft);
+  }
+  .timer-controls{
+    display:flex;
+    gap:10px;
+    margin-top:26px;
+  }
+  .timer-controls button{
+    flex:1;
+    padding:12px 0;
+    border-radius:var(--radius);
+    border:1px solid var(--line);
+    background:transparent;
+    font-family:var(--sans);
+    font-size:14px;
+    font-weight:500;
+    cursor:pointer;
+    color:var(--ink);
+    transition:background .15s ease, border-color .15s ease;
+  }
+  .timer-controls button.primary{
+    background:var(--ink);
+    color:var(--bg);
+    border-color:var(--ink);
+  }
+  .timer-controls button.primary:hover{background:var(--accent-dark); border-color:var(--accent-dark);}
+  .timer-controls button:not(.primary):hover{border-color:var(--ink);}
+  .timer-bar{
+    margin-top:22px;
+    height:4px;
+    width:100%;
+    background:var(--line);
+    border-radius:2px;
+    overflow:hidden;
+  }
+  .timer-bar-fill{
+    height:100%;
+    width:0%;
+    background:var(--accent);
+    transition:width 1s linear;
+  }
+
+  /* ---------- logos strip ---------- */
+  .trust{
+    padding:36px 0;
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+  }
+  .trust-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:24px;
+  }
+  .trust-row p{
+    font-size:13px;
+    color:var(--ink-soft);
+    white-space:nowrap;
+  }
+  .trust-names{
+    display:flex;
+    gap:36px;
+    flex-wrap:wrap;
+    font-family:var(--serif);
+    font-size:17px;
+    color:var(--ink-soft);
+  }
+
+  /* ---------- features (asymmetric, not identical cards) ---------- */
+  .features{
+    padding:120px 0;
+  }
+  .feature-intro{
+    max-width:34ch;
+    margin-bottom:64px;
+  }
+  .feature-intro h2{
+    font-size:clamp(30px, 3.6vw, 40px);
+    line-height:1.15;
+    letter-spacing:-0.01em;
+  }
+  .feature-spotlight{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:56px;
+    align-items:center;
+    padding-bottom:80px;
+    margin-bottom:80px;
+    border-bottom:1px solid var(--line);
+  }
+  .feature-spotlight .visual{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:32px;
+  }
+  .rhythm-row{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:12px 0;
+    border-bottom:1px solid var(--line);
+    font-family:var(--mono);
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  .rhythm-row:last-child{border-bottom:none;}
+  .rhythm-dot{
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:var(--line);
+    flex-shrink:0;
+  }
+  .rhythm-row.active .rhythm-dot{background:var(--accent);}
+  .rhythm-row.active{color:var(--ink);}
+  .rhythm-bar{
+    flex:1;
+    height:20px;
+    background:#F1EEE5;
+    border-radius:3px;
+    position:relative;
+    overflow:hidden;
+  }
+  .rhythm-bar span{
+    position:absolute;
+    left:0;top:0;bottom:0;
+    background:var(--accent);
+    border-radius:3px;
+  }
+  .feature-spotlight .copy h3{
+    font-size:26px;
+    margin-bottom:16px;
+  }
+  .feature-spotlight .copy p{
+    color:var(--ink-soft);
+    font-size:16px;
+    max-width:42ch;
+  }
+
+  .feature-pair{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:56px;
+  }
+  .feature-pair article h3{
+    font-size:20px;
+    margin-bottom:12px;
+  }
+  .feature-pair article p{
+    color:var(--ink-soft);
+    font-size:15.5px;
+    max-width:40ch;
+  }
+  .feature-pair .marker{
+    display:inline-block;
+    width:36px;
+    height:36px;
+    border:1px solid var(--line);
+    border-radius:50%;
+    margin-bottom:20px;
+    position:relative;
+  }
+  .feature-pair .marker::after{
+    content:"";
+    position:absolute;
+    inset:11px;
+    border-radius:50%;
+    background:var(--gold);
+  }
+  .feature-pair article:last-child .marker::after{background:var(--accent);}
+
+  /* ---------- quote ---------- */
+  .quote-band{
+    background:var(--ink);
+    color:var(--bg);
+    padding:100px 0;
+  }
+  .quote-band blockquote{
+    margin:0;
+    font-family:var(--serif);
+    font-size:clamp(24px, 3vw, 34px);
+    line-height:1.4;
+    max-width:24ch;
+    letter-spacing:-0.01em;
+  }
+  .quote-band cite{
+    display:block;
+    margin-top:28px;
+    font-style:normal;
+    font-size:14px;
+    color:#B9C2BB;
+  }
+
+  /* ---------- pricing / cta ---------- */
+  .cta-band{
+    padding:120px 0;
+    text-align:left;
+  }
+  .cta-inner{
+    display:grid;
+    grid-template-columns:1.2fr 0.8fr;
+    gap:48px;
+    align-items:end;
+    border-top:1px solid var(--line);
+    padding-top:56px;
+  }
+  .cta-inner h2{
+    font-size:clamp(30px, 4vw, 44px);
+    line-height:1.12;
+    max-width:14ch;
+  }
+  .cta-actions{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:14px;
+  }
+  .cta-price{
+    font-family:var(--mono);
+    font-size:14px;
+    color:var(--ink-soft);
+  }
+
+  /* ---------- footer ---------- */
+  footer{
+    border-top:1px solid var(--line);
+    padding:40px 0;
+  }
+  .foot-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:16px;
+  }
+  .foot-row p{
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  .foot-links{
+    display:flex;
+    gap:24px;
+    list-style:none;
+    padding:0;
+    margin:0;
+  }
+  .foot-links a{
+    font-size:13px;
+    color:var(--ink-soft);
+    text-decoration:none;
+  }
+  .foot-links a:hover{color:var(--ink);}
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 900px){
+    .hero-grid{grid-template-columns:1fr; gap:48px;}
+    .feature-spotlight{grid-template-columns:1fr;}
+    .feature-spotlight .visual{order:2;}
+    .feature-pair{grid-template-columns:1fr; gap:40px;}
+    .cta-inner{grid-template-columns:1fr; align-items:start;}
+    .trust-row{flex-direction:column; align-items:flex-start;}
+  }
+  @media (max-width: 640px){
+    .wrap{padding:0 20px;}
+    .nav{padding:16px 20px;}
+    .nav-links{display:none;}
+    .hero{padding:56px 0 64px;}
+    .features{padding:72px 0;}
+    .cta-band{padding:72px 0;}
+    .quote-band{padding:64px 0;}
+    .timer-card{padding:26px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="nav" aria-label="Primary">
+    <a href="#top" class="wordmark">Inter<span>val</span></a>
+    <ul class="nav-links">
+      <li><a href="#how-it-works">How it works</a></li>
+      <li><a href="#rhythm">Rhythm</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+    </ul>
+    <a class="nav-cta" href="#pricing">Start free</a>
+  </nav>
+</header>
+
+<main id="top">
+
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <h1>A timer that protects the hour, not just the minutes.</h1>
+        <p class="lede">Interval breaks your day into deliberate work sessions and real breaks, so the good hours don't get eaten by notifications, half-starts, and open tabs.</p>
+        <div class="hero-actions">
+          <a href="#pricing" class="btn-primary">Start your first session</a>
+          <a href="#how-it-works" class="link-quiet">See how it works</a>
+        </div>
+        <p class="hero-note">No account needed to try it. Runs quietly in a browser tab.</p>
+      </div>
+
+      <div class="timer-card" role="region" aria-label="Interactive focus timer demo">
+        <p class="label">FOCUS SESSION · DEMO</p>
+        <div class="timer-display" id="timerDisplay">25:00</div>
+        <p class="timer-sub" id="timerStatus">Ready when you are.</p>
+        <div class="timer-bar"><div class="timer-bar-fill" id="timerBar"></div></div>
+        <div class="timer-controls">
+          <button class="primary" id="timerToggle" type="button">Start</button>
+          <button id="timerReset" type="button">Reset</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="trust">
+    <div class="wrap trust-row">
+      <p>Used for solo deep work and small teams alike</p>
+      <div class="trust-names">
+        <span>Studio Basalt</span>
+        <span>Northline Writers</span>
+        <span>Pale Fox Design</span>
+        <span>Ferro Labs</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="features" id="how-it-works">
+    <div class="wrap">
+      <div class="feature-intro">
+        <h2>Built around a rhythm, not a stopwatch.</h2>
+      </div>
+
+      <div class="feature-spotlight" id="rhythm">
+        <div class="visual">
+          <div class="rhythm-row active">
+            <span class="rhythm-dot"></span>
+            <span style="width:70px;">Focus</span>
+            <div class="rhythm-bar"><span style="width:100%; background:var(--accent);"></span></div>
+            <span>25m</span>
+          </div>
+          <div class="rhythm-row">
+            <span class="rhythm-dot"></span>
+            <span style="width:70px;">Break</span>
+            <div class="rhythm-bar"><span style="width:40%; background:var(--gold);"></span></div>
+            <span>5m</span>
+          </div>
+          <div class="rhythm-row">
+            <span class="rhythm-dot"></span>
+            <span style="width:70px;">Focus</span>
+            <div class="rhythm-bar"><span style="width:100%; background:var(--accent);"></span></div>
+            <span>25m</span>
+          </div>
+          <div class="rhythm-row">
+            <span class="rhythm-dot"></span>
+            <span style="width:70px;">Long break</span>
+            <div class="rhythm-bar"><span style="width:70%; background:var(--gold);"></span></div>
+            <span>15m</span>
+          </div>
+        </div>
+        <div class="copy">
+          <h3>Sessions that get longer breaks right.</h3>
+          <p>Most timers treat every break the same. Interval lengthens the break after every third session automatically, so fatigue doesn't quietly build across the afternoon.</p>
+        </div>
+      </div>
+
+      <div class="feature-pair">
+        <article>
+          <span class="marker" aria-hidden="true"></span>
+          <h3>Sits outside your task list</h3>
+          <p>Interval doesn't ask you to plan your day inside it. Point it at whatever you're already working on, and it keeps the clock honest.</p>
+        </article>
+        <article>
+          <span class="marker" aria-hidden="true"></span>
+          <h3>Quiet by default</h3>
+          <p>One soft chime at the end of a session. No badges, no streaks, no weekly guilt email — just a clear signal that it's time to stand up.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="quote-band">
+    <div class="wrap">
+      <blockquote>
+        "I stopped negotiating with myself about when to take a break. Interval just tells me, and I listen."
+        <cite>— A writer who used Interval for a full manuscript draft</cite>
+      </blockquote>
+    </div>
+  </section>
+
+  <section class="cta-band" id="pricing">
+    <div class="wrap">
+      <div class="cta-inner">
+        <h2>Try it for a week before you decide anything.</h2>
+        <div class="cta-actions">
+          <a href="#top" class="btn-primary">Start your first session</a>
+          <p class="cta-price">Free for individuals · Team plans from $4/seat</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap foot-row">
+    <p>&copy; 2026 Interval. Built for people who'd rather finish than multitask.</p>
+    <ul class="foot-links">
+      <li><a href="#">Privacy</a></li>
+      <li><a href="#">Terms</a></li>
+      <li><a href="#">Contact</a></li>
+    </ul>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var totalSeconds = 25 * 60;
+  var remaining = totalSeconds;
+  var running = false;
+  var intervalId = null;
+
+  var display = document.getElementById('timerDisplay');
+  var status = document.getElementById('timerStatus');
+  var bar = document.getElementById('timerBar');
+  var toggleBtn = document.getElementById('timerToggle');
+  var resetBtn = document.getElementById('timerReset');
+
+  function format(s){
+    var m = Math.floor(s / 60);
+    var sec = s % 60;
+    return (m < 10 ? '0' + m : m) + ':' + (sec < 10 ? '0' + sec : sec);
+  }
+
+  function render(){
+    display.textContent = format(remaining);
+    var pct = ((totalSeconds - remaining) / totalSeconds) * 100;
+    bar.style.width = pct + '%';
+  }
+
+  function tick(){
+    if (remaining <= 0){
+      pause();
+      status.textContent = 'Session complete. Time for a short break.';
+      display.classList.remove('is-running');
+      return;
+    }
+    remaining -= 1;
+    render();
+  }
+
+  function start(){
+    running = true;
+    display.classList.add('is-running');
+    toggleBtn.textContent = 'Pause';
+    status.textContent = 'Focusing — 25 minute session in progress.';
+    intervalId = setInterval(tick, 1000);
+  }
+
+  function pause(){
+    running = false;
+    display.classList.remove('is-running');
+    toggleBtn.textContent = 'Start';
+    if (remaining > 0 && remaining < totalSeconds){
+      status.textContent = 'Paused. Pick up whenever you\'re ready.';
+    }
+    clearInterval(intervalId);
+  }
+
+  toggleBtn.addEventListener('click', function(){
+    if (running){ pause(); } else { start(); }
+  });
+
+  resetBtn.addEventListener('click', function(){
+    pause();
+    remaining = totalSeconds;
+    status.textContent = 'Ready when you are.';
+    render();
+  });
+
+  render();
+})();
+</script>
+
+</body>
+</html>
