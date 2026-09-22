@@ -1,6 +1,6 @@
 Interval — Responsive Landing Page
 A single-page, fully responsive landing page for Interval, a focus-timer product. Built as a self-contained `index.html` (no build step, no dependencies) so it can be dropped into any static host.
-Live demo: add your GitHub Pages / Netlify / Vercel link here after deploying
+**Live demo:** https://ghulampanjtangp-cmyk.github.io/project-1/
 Screenshots: add desktop, tablet, and mobile screenshots here (see "Taking screenshots" below)
 What's included
 Hero section — headline, subhead, primary CTA, and a live working countdown timer as the hero visual.
